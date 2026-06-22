@@ -23,18 +23,35 @@
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
-    "plugins": [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          "backgroundColor": "#208AEF",
-          "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
-          }
-        }
-      ]
+    
+"plugins": [
+  "expo-router",
+  [
+    "expo-splash-screen",
+    {
+      "backgroundColor": "#208AEF",
+      "android": {
+        "image": "./assets/images/splash-icon.png",
+        "imageWidth": 76
+      }
+    }
+  ],
+  [
+    "expo-location",
+    {
+      "locationAlwaysAndWhenInUsePermission": "SkyAlert needs your location to show drone warnings near you.",
+      "locationAlwaysPermission": "SkyAlert needs background location to alert you when entering an area with reported drones.",
+      "locationWhenInUsePermission": "SkyAlert needs your location to show drone warnings near you.",
+      "isAndroidBackgroundLocationEnabled": true,
+      "isIosBackgroundLocationEnabled": true
+    }
+  ],
+  [
+    "expo-notifications",
+    {
+      "color": "#EF4444"
+    }
+  ]
     ],
     "experiments": {
       "typedRoutes": true,
