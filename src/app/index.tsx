@@ -8,6 +8,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { DEFAULT_REGION, TILE_URL, MAX_ZOOM, TILE_ATTRIBUTION,} from '@/constants/map';
 
 function getDevMenuHint() {
   if (Platform.OS === 'web') {
