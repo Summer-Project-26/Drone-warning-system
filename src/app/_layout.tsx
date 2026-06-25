@@ -5,7 +5,6 @@ import { ActivityIndicator, View, useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AdminDashboard } from '@/components/admin-dashboard';
-import AppTabs from '@/components/app-tabs';
 import { auth } from '@/services/firebase';
 import { cleanupExpiredAlerts } from '@/services/alertService';
 import { subscribeUserProfile } from '@/services/userService';
@@ -56,7 +55,7 @@ export default function TabLayout() {
       ) : user && role === 'admin' ? (
         <AdminDashboard />
       ) : user ? (
-        <AppTabs />
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="index" />
       ) : isAuthRoute ? (
         <Stack screenOptions={{ headerShown: false }} />
       ) : (

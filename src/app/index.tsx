@@ -1,61 +1,75 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
+import { logoutUser } from '@/services/authService';
 
 export default function HomeScreen() {
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      setLoggingOut(true);
+      await logoutUser();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unable to sign out.';
+      Alert.alert('Logout error', message);
+    } finally {
+      setLoggingOut(false);
+    }
+  }, []);
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <View style={styles.logoutSlot}>
+          <Pressable
+            onPress={handleLogout}
+            style={({ pressed }) => [styles.logoutButton, pressed && styles.logoutButtonPressed]}
+            disabled={loggingOut}>
+            <ThemedText type="smallBold" style={styles.logoutText}>
+              {loggingOut ? 'Logging out...' : 'Log out'}
+            </ThemedText>
+          </Pressable>
+        </View>
+
         <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
+          <ThemedText type="smallBold" style={styles.pill}>
+            SkyAlert control center
+          </ThemedText>
           <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
+            Keep drone warnings visible, fast, and under control.
+          </ThemedText>
+          <ThemedText themeColor="textSecondary" style={styles.subtitle}>
+            Monitor active alerts, review recent activity, and stay signed in to your operational dashboard.
           </ThemedText>
         </ThemedView>
 
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
+        <View style={styles.cardGrid}>
+          <ThemedView type="backgroundElement" style={styles.infoCard}>
+            <ThemedText type="smallBold">Live alerts</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">
+              Watch the latest drone alerts that still fall inside the 24-hour window.
+            </ThemedText>
+          </ThemedView>
 
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+          <ThemedView type="backgroundElement" style={styles.infoCard}>
+            <ThemedText type="smallBold">Admin tools</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">
+              Review users, expired alerts, and cleanup activity from the admin dashboard.
+            </ThemedText>
+          </ThemedView>
 
-        {Platform.OS === 'web' && <WebBadge />}
+          <ThemedView type="backgroundElement" style={styles.infoCard}>
+            <ThemedText type="smallBold">Secure session</ThemedText>
+            <ThemedText themeColor="textSecondary" type="small">
+              Use the corner button to log out instantly when you&apos;re done.
+            </ThemedText>
+          </ThemedView>
+        </View>
       </SafeAreaView>
     </ThemedView>
   );
@@ -70,29 +84,56 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.three,
     maxWidth: MaxContentWidth,
+    width: '100%',
+  },
+  logoutSlot: {
+    width: '100%',
+    alignItems: 'flex-end',
+  },
+  logoutButton: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+    borderRadius: Spacing.five,
+    backgroundColor: '#FEE2E2',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: '#FCA5A5',
+  },
+  logoutButtonPressed: {
+    opacity: 0.8,
+  },
+  logoutText: {
+    color: '#B91C1C',
   },
   heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+    gap: Spacing.three,
+    paddingTop: Spacing.four,
+    paddingBottom: Spacing.three,
   },
   title: {
-    textAlign: 'center',
+    maxWidth: 420,
   },
-  code: {
-    textTransform: 'uppercase',
+  subtitle: {
+    maxWidth: 460,
+    lineHeight: 22,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
+  pill: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: Spacing.two,
+    paddingVertical: Spacing.one,
+    borderRadius: Spacing.five,
+    backgroundColor: '#DBEAFE',
+    color: '#1D4ED8',
+  },
+  cardGrid: {
+    gap: Spacing.two,
+    paddingTop: Spacing.three,
+  },
+  infoCard: {
+    gap: Spacing.one,
+    padding: Spacing.four,
     borderRadius: Spacing.four,
   },
 });
