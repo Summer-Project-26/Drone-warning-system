@@ -18,14 +18,16 @@ import { getDashboardStats } from '@/services/dashboardService';
 
 const statLabels = [
   { key: 'users', label: 'Users' },
-  { key: 'alerts', label: 'Alerts' },
+  { key: 'activeAlerts', label: 'Active alerts' },
+  { key: 'expiredAlerts', label: 'Expired alerts' },
   { key: 'reports', label: 'Reports' },
   { key: 'feedback', label: 'Feedback' },
 ] as const;
 
 type DashboardStats = {
   users: number;
-  alerts: number;
+  activeAlerts: number;
+  expiredAlerts: number;
   reports: number;
   feedback: number;
 };
@@ -41,20 +43,22 @@ export function AdminDashboard() {
   const [recentAlerts, setRecentAlerts] = useState<AlertSummary[]>([]);
   const [refreshing, setRefreshing] = useState(true);
   const [cleanupCount, setCleanupCount] = useState<number | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<Date | null>(null);
 
   const loadDashboard = useCallback(async () => {
     setRefreshing(true);
 
     try {
-      const [dashboardStats, alerts, removedCount] = await Promise.all([
+      const removedCount = await cleanupExpiredAlerts();
+      const [dashboardStats, alerts] = await Promise.all([
         getDashboardStats(),
         getRecentAlerts(5),
-        cleanupExpiredAlerts(),
       ]);
 
       setStats(dashboardStats);
       setRecentAlerts(alerts);
       setCleanupCount(removedCount);
+      setLastRefreshedAt(new Date());
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to load dashboard data.';
       Alert.alert('Admin dashboard error', message);
@@ -64,7 +68,17 @@ export function AdminDashboard() {
   }, []);
 
   useEffect(() => {
-    loadDashboard();
+    let active = true;
+
+    Promise.resolve().then(() => {
+      if (active) {
+        void loadDashboard();
+      }
+    });
+
+    return () => {
+      active = false;
+    };
   }, [loadDashboard]);
 
   const handleLogout = async () => {
@@ -84,7 +98,7 @@ export function AdminDashboard() {
       <ThemedView style={styles.hero}>
         <ThemedText type="subtitle">Admin Dashboard</ThemedText>
         <ThemedText themeColor="textSecondary">
-          Monitoring users, alerts, reports, and feedback from Firestore.
+          Monitoring users, active alerts, expired alerts, reports, and feedback from Firestore.
         </ThemedText>
       </ThemedView>
 
@@ -106,10 +120,14 @@ export function AdminDashboard() {
           Alert TTL
         </ThemedText>
         <ThemedText themeColor="textSecondary" style={styles.panelBody}>
-          Alerts store an expiresAt field and the dashboard removes expired documents older than 24 hours.
+          Alerts store an expiresAt field and the dashboard removes expired documents older than 24 hours before
+          loading the latest stats.
         </ThemedText>
         <ThemedText type="smallBold">
           {cleanupCount === null ? 'Cleanup pending' : `Expired alerts deleted: ${cleanupCount}`}
+        </ThemedText>
+        <ThemedText themeColor="textSecondary" type="small">
+          {lastRefreshedAt ? `Last refreshed: ${lastRefreshedAt.toLocaleString()}` : 'Dashboard has not refreshed yet.'}
         </ThemedText>
       </ThemedView>
 
@@ -121,7 +139,7 @@ export function AdminDashboard() {
         {refreshing && !stats ? (
           <ActivityIndicator />
         ) : recentAlerts.length === 0 ? (
-          <ThemedText themeColor="textSecondary">No alerts found.</ThemedText>
+          <ThemedText themeColor="textSecondary">No active alerts found.</ThemedText>
         ) : (
           recentAlerts.map(alert => (
             <View key={alert.id} style={styles.alertRow}>

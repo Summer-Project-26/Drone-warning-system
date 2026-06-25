@@ -2,8 +2,6 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-
-// The .env file is gitignored — each teammate needs their own copy.
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -13,18 +11,17 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID,
 };
 
+const missingFirebaseKeys = Object.entries(firebaseConfig)
+  .filter(([, value]) => !value)
+  .map(([key]) => key);
+
+if (missingFirebaseKeys.length > 0) {
+  throw new Error(
+    `Missing Firebase environment variables: ${missingFirebaseKeys.join(', ')}. Add them to .env from your Firebase project settings.`,
+  );
+}
+
 const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-
-
-// this is example how do you create .env in the root folder file 
-// with this correct names and write the correct this from firebase website 
-
-// EXPO_PUBLIC_FIREBASE_API_KEY= write correctly from firebse webiste
-// EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN= write correctly from firebse webiste
-// EXPO_PUBLIC_FIREBASE_PROJECT_ID=write correctly from firebse webiste
-// EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=write correctly from firebse webiste
-// EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=write correctly from firebse webiste
-// EXPO_PUBLIC_FIREBASE_APP_ID=write correctly from firebse webiste

@@ -14,6 +14,7 @@ import {
 import { db } from "./firebase";
 
 const ALERT_TTL_MS = 24 * 60 * 60 * 1000;
+const MAX_BATCH_DELETE_SIZE = 500;
 
 export async function createAlert(alertData) {
   return addDoc(collection(db, "alerts"), {
@@ -31,22 +32,34 @@ export async function cleanupExpiredAlerts() {
     return 0;
   }
 
-  const batch = writeBatch(db);
-  snapshot.docs.forEach(alertDoc => {
-    batch.delete(alertDoc.ref);
-  });
+  let deletedCount = 0;
 
-  await batch.commit();
-  return snapshot.size;
+  for (let index = 0; index < snapshot.docs.length; index += MAX_BATCH_DELETE_SIZE) {
+    const batch = writeBatch(db);
+    const docsToDelete = snapshot.docs.slice(index, index + MAX_BATCH_DELETE_SIZE);
+
+    docsToDelete.forEach(alertDoc => {
+      batch.delete(alertDoc.ref);
+    });
+
+    await batch.commit();
+    deletedCount += docsToDelete.length;
+  }
+
+  return deletedCount;
 }
 
 export async function getRecentAlerts(maxResults = 5) {
   const recentAlertsQuery = query(
     collection(db, "alerts"),
     orderBy("createdAt", "desc"),
-    limit(maxResults),
+    limit(Math.max(maxResults * 3, maxResults)),
   );
   const snapshot = await getDocs(recentAlertsQuery);
+  const now = Timestamp.now();
 
-  return snapshot.docs.map(alertDoc => ({ id: alertDoc.id, ...alertDoc.data() }));
+  return snapshot.docs
+    .map(alertDoc => ({ id: alertDoc.id, ...alertDoc.data() }))
+    .filter(alert => !alert.expiresAt || alert.expiresAt.toMillis() > now.toMillis())
+    .slice(0, maxResults);
 }

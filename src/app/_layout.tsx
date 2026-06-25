@@ -1,12 +1,10 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Redirect, Stack, ThemeProvider, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, View } from 'react-native';
 import { onAuthStateChanged, type User } from 'firebase/auth';
-import { useColorScheme } from 'react-native';
+import { ActivityIndicator, View, useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AdminDashboard } from '@/components/admin-dashboard';
-import { AuthScreen } from '@/components/auth-screen';
 import AppTabs from '@/components/app-tabs';
 import { auth } from '@/services/firebase';
 import { cleanupExpiredAlerts } from '@/services/alertService';
@@ -14,9 +12,12 @@ import { subscribeUserProfile } from '@/services/userService';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const segments = useSegments();
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [initializing, setInitializing] = useState(true);
+  const authRoutes = new Set(['login', 'signup', 'reset-password', 'create-account']);
+  const isAuthRoute = authRoutes.has(segments[0] ?? '');
 
   useEffect(() => {
     let unsubscribeProfile = () => {};
@@ -33,7 +34,7 @@ export default function TabLayout() {
 
       setInitializing(true);
       cleanupExpiredAlerts().catch(() => undefined);
-      unsubscribeProfile = subscribeUserProfile(nextUser.uid, profile => {
+      unsubscribeProfile = subscribeUserProfile(nextUser.uid, (profile: { role: string; }) => {
         setRole(profile?.role === 'admin' ? 'admin' : 'user');
         setInitializing(false);
       });
@@ -56,8 +57,10 @@ export default function TabLayout() {
         <AdminDashboard />
       ) : user ? (
         <AppTabs />
+      ) : isAuthRoute ? (
+        <Stack screenOptions={{ headerShown: false }} />
       ) : (
-        <AuthScreen />
+        <Redirect href="/login" />
       )}
     </ThemeProvider>
   );
