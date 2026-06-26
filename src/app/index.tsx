@@ -1,14 +1,16 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { logoutUser } from '@/services/authService';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
   const [loggingOut, setLoggingOut] = useState(false);
+  const router = useRouter();
 
   const handleLogout = useCallback(async () => {
     try {
@@ -25,6 +27,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.logoutSlot}>
           <Pressable
             onPress={handleLogout}
@@ -69,7 +72,16 @@ export default function HomeScreen() {
               Use the corner button to log out instantly when you&apos;re done.
             </ThemedText>
           </ThemedView>
+          <Pressable
+  onPress={() => router.push('/map')}
+  style={({ pressed }) => [styles.mapButton, pressed && { opacity: 0.7 }]}>
+  <ThemedText type="smallBold" style={{ color: '#fff' }}>
+    Open map
+  </ThemedText>
+</Pressable>
+          
         </View>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -89,6 +101,10 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     width: '100%',
   },
+  scrollContent: {
+  paddingBottom: Spacing.four,
+  gap: Spacing.three,
+},
   logoutSlot: {
     width: '100%',
     alignItems: 'flex-end',
@@ -136,4 +152,12 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: Spacing.four,
   },
+  mapButton: {
+  backgroundColor: '#3B82F6',
+  padding: Spacing.three,
+  borderRadius: Spacing.four,
+  alignItems: 'center',
+  marginTop: Spacing.two,
+},
+
 });
