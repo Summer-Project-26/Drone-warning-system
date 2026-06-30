@@ -13,6 +13,7 @@ export default function MapScreen() {
           style={styles.map}
           initialRegion={DEFAULT_REGION}
           showsPointsOfInterests={false}
+          showsUserLocation={true}
           showsBuildings={false}>
           <UrlTile
             urlTemplate={TILE_URL}
