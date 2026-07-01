@@ -73,7 +73,7 @@ export default function HomeScreen() {
             </ThemedText>
           </ThemedView>
           <Pressable
-  onPress={() => router.push('/map')}
+  onPress={() => router.push('/location-permission')}
   style={({ pressed }) => [styles.mapButton, pressed && { opacity: 0.7 }]}>
   <ThemedText type="smallBold" style={{ color: '#fff' }}>
     Open map
