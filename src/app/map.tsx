@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, Text, ScrollView } from 'react-native';
+import { View, StyleSheet, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { UrlTile, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
@@ -10,6 +10,7 @@ import { MapHeader } from '@/components/map/map-header';
 import { NearbyAlertCard } from '@/components/map/nearby-alert-card';
 import { attachDistances, filterNearby } from '@/services/geofencing';
 import type { Alert, AlertWithDistance } from '@/types/alert';
+import { fireTestNotification } from '@/services/notifications';
 
 const DUMMY_ALERTS: Alert[] = [
   {
@@ -101,6 +102,10 @@ export default function MapScreen() {
       <View style={styles.mapWrapper}>
         <MapHeader activeCount={nearby.length} worstLevel={worstLevel} />
 
+        <Pressable onPress={fireTestNotification} style={styles.testBtn}>
+        <Text style={styles.testBtnText}>🔔 Test</Text>
+        </Pressable>
+
         <MapView
           provider={PROVIDER_DEFAULT}
           style={styles.map}
@@ -156,6 +161,23 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   attributionText: { fontSize: 9, color: '#000' },
+  testBtn: {
+    position: 'absolute',
+    top: 70,
+    right: 12,
+    zIndex: 10,
+    backgroundColor: 'rgba(31,32,35,0.95)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  testBtnText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
   nearbySection: {
     flex: 1,
     paddingHorizontal: 16,

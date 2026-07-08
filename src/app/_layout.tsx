@@ -8,6 +8,7 @@ import { AdminDashboard } from '@/components/admin-dashboard';
 import { auth } from '@/services/firebase';
 import { cleanupExpiredAlerts } from '@/services/alertService';
 import { subscribeUserProfile } from '@/services/userService';
+import { setupNotificationChannels, requestNotificationPermission } from '@/services/notifications';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -24,6 +25,7 @@ export default function TabLayout() {
     const unsubscribe = onAuthStateChanged(auth, nextUser => {
       unsubscribeProfile();
       setUser(nextUser);
+     
 
       if (!nextUser) {
         setRole(null);
@@ -39,6 +41,9 @@ export default function TabLayout() {
       });
     });
 
+    setupNotificationChannels();
+    requestNotificationPermission();
+    
     return () => {
       unsubscribeProfile();
       unsubscribe();
