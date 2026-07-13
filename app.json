@@ -63,6 +63,12 @@
         {
           "color": "#EF4444"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "SkyAlert needs camera access so you can attach an optional photo to a drone report."
+        }
       ]
     ],
     "experiments": {
