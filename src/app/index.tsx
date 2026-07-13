@@ -72,11 +72,18 @@ export default function HomeScreen() {
               Use the corner button to log out instantly when you&apos;re done.
             </ThemedText>
           </ThemedView>
-          <Pressable
+        <Pressable
   onPress={() => router.push('/location-permission')}
   style={({ pressed }) => [styles.mapButton, pressed && { opacity: 0.7 }]}>
   <ThemedText type="smallBold" style={{ color: '#fff' }}>
     Open map
+  </ThemedText>
+</Pressable>
+          <Pressable
+  onPress={() => router.push('/add-alert')}
+  style={({ pressed }) => [styles.reportButton, pressed && { opacity: 0.7 }]}>
+  <ThemedText type="smallBold" style={{ color: '#fff' }}>
+    Report a drone
   </ThemedText>
 </Pressable>
           
@@ -152,8 +159,15 @@ const styles = StyleSheet.create({
     padding: Spacing.four,
     borderRadius: Spacing.four,
   },
-  mapButton: {
+mapButton: {
   backgroundColor: '#3B82F6',
+  padding: Spacing.three,
+  borderRadius: Spacing.four,
+  alignItems: 'center',
+  marginTop: Spacing.two,
+},
+  reportButton: {
+  backgroundColor: '#EF4444',
   padding: Spacing.three,
   borderRadius: Spacing.four,
   alignItems: 'center',
@@ -161,3 +175,4 @@ const styles = StyleSheet.create({
 },
 
 });
+
