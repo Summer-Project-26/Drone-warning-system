@@ -1,65 +1,21 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, StyleSheet, Text, ScrollView, Pressable } from 'react-native';
+import { useEffect, useMemo } from 'react';
+import { View, StyleSheet, Text, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import MapView, { UrlTile, PROVIDER_DEFAULT } from 'react-native-maps';
 import * as Location from 'expo-location';
+import { useState } from 'react';
 
 import { DEFAULT_REGION, TILE_URL, MAX_ZOOM, TILE_ATTRIBUTION } from '@/constants/map';
 import { AlertMarker } from '@/components/map/alert-marker';
 import { MapHeader } from '@/components/map/map-header';
 import { NearbyAlertCard } from '@/components/map/nearby-alert-card';
 import { attachDistances, filterNearby } from '@/services/geofencing';
-import type { Alert, AlertWithDistance } from '@/types/alert';
-import { fireTestNotification } from '@/services/notifications';
-
-const DUMMY_ALERTS: Alert[] = [
-  {
-    id: 'a1',
-    level: 'high',
-    status: 'verified',
-    latitude: 65.0145,
-    longitude: 25.4720,
-    locationName: 'North Park, Oak Street',
-    description: 'Low-flying drone circling residential area, heading south',
-    direction: 'S',
-    stillVisible: true,
-    reportedAt: Date.now() - 4 * 60 * 1000,
-    expiresAt: Date.now() + 26 * 60 * 1000,
-    reporterUid: 'demo-1',
-    confirmCount: 5,
-  },
-  {
-    id: 'a2',
-    level: 'medium',
-    status: 'unverified',
-    latitude: 65.0098,
-    longitude: 25.4590,
-    locationName: 'River District',
-    description: 'Drone observed near school playground, hovering',
-    direction: 'NW',
-    stillVisible: true,
-    reportedAt: Date.now() - 18 * 60 * 1000,
-    expiresAt: Date.now() + 12 * 60 * 1000,
-    reporterUid: 'demo-2',
-    confirmCount: 2,
-  },
-  {
-    id: 'a3',
-    level: 'low',
-    status: 'resolved',
-    latitude: 65.0050,
-    longitude: 25.4810,
-    locationName: 'Market Square',
-    description: 'Brief drone sighting, no longer visible',
-    stillVisible: false,
-    reportedAt: Date.now() - 45 * 60 * 1000,
-    expiresAt: Date.now() + 60 * 60 * 1000,
-    reporterUid: 'demo-3',
-    confirmCount: 1,
-  },
-];
+import { startGeofencing } from '@/services/background-location';
+import { useAlerts } from '@/hooks/use-alerts';
+import type { AlertWithDistance } from '@/types/alert';
 
 export default function MapScreen() {
+  const { alerts, loading } = useAlerts();
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
     null
   );
@@ -81,12 +37,19 @@ export default function MapScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!userLocation || alerts.length === 0) return;
+    startGeofencing(alerts, userLocation.latitude, userLocation.longitude).catch((e) =>
+      console.warn('[geofencing] start failed:', e)
+    );
+  }, [alerts, userLocation]);
+
   const alertsWithDistance: AlertWithDistance[] = useMemo(() => {
     if (!userLocation) {
-      return DUMMY_ALERTS.map((a) => ({ ...a, distanceKm: 0 }));
+      return alerts.map((a) => ({ ...a, distanceKm: 0 }));
     }
-    return attachDistances(DUMMY_ALERTS, userLocation.latitude, userLocation.longitude);
-  }, [userLocation]);
+    return attachDistances(alerts, userLocation.latitude, userLocation.longitude);
+  }, [alerts, userLocation]);
 
   const nearby = useMemo(() => filterNearby(alertsWithDistance, 50), [alertsWithDistance]);
 
@@ -102,10 +65,6 @@ export default function MapScreen() {
       <View style={styles.mapWrapper}>
         <MapHeader activeCount={nearby.length} worstLevel={worstLevel} />
 
-        <Pressable onPress={fireTestNotification} style={styles.testBtn}>
-        <Text style={styles.testBtnText}>🔔 Test</Text>
-        </Pressable>
-
         <MapView
           provider={PROVIDER_DEFAULT}
           style={styles.map}
@@ -115,7 +74,7 @@ export default function MapScreen() {
           showsBuildings={false}>
           <UrlTile urlTemplate={TILE_URL} maximumZ={MAX_ZOOM} flipY={false} />
 
-          {DUMMY_ALERTS.map((alert) => (
+          {alertsWithDistance.map((alert) => (
             <AlertMarker key={alert.id} alert={alert} />
           ))}
         </MapView>
@@ -131,7 +90,9 @@ export default function MapScreen() {
           <Text style={styles.seeAll}>See all</Text>
         </View>
 
-        {nearby.length === 0 ? (
+        {loading ? (
+          <Text style={styles.empty}>Loading alerts…</Text>
+        ) : nearby.length === 0 ? (
           <Text style={styles.empty}>No alerts nearby.</Text>
         ) : (
           <ScrollView style={styles.nearbyList}>
@@ -161,23 +122,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   attributionText: { fontSize: 9, color: '#000' },
-  testBtn: {
-    position: 'absolute',
-    top: 70,
-    right: 12,
-    zIndex: 10,
-    backgroundColor: 'rgba(31,32,35,0.95)',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  testBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
   nearbySection: {
     flex: 1,
     paddingHorizontal: 16,
