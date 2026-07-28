@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LocationPermissionScreen() {
   const router = useRouter();
@@ -31,8 +32,10 @@ export default function LocationPermissionScreen() {
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.iconWrap}>
-          <View style={styles.iconBox} />
-        </View>
+  <View style={styles.iconBox}>
+    <Ionicons name="location" size={40} color="#3B82F6" />
+  </View>
+</View>
 
         <Text style={styles.title}>Enable location access</Text>
         <Text style={styles.body}>
@@ -101,6 +104,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1B2A4A',
     borderWidth: 1.5,
     borderColor: '#3B82F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: { color: '#fff', fontSize: 24, fontWeight: '700', textAlign: 'center' },
   body: {

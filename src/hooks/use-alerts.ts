@@ -21,18 +21,20 @@ function mapFirestoreToAlert(id: string, data: any): Alert {
     return Date.now();
   };
 
-  const nameFromCategory = (cat: string | undefined): string => {
-    if (!cat) return 'Alert';
-    return cat.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-  };
-
+ const nameFromCategory = (data: any): string => {
+  const cat = data.category;
+  if (cat) {
+    return cat.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+  }
+  return 'Drone Alert';
+};
   return {
     id,
     level: levelMap[data.level] ?? 'low',
     status,
     latitude: data.latitude,
     longitude: data.longitude,
-    locationName: nameFromCategory(data.category),
+    locationName: nameFromCategory(data),
     description: data.description ?? '',
     stillVisible: true,
     photoUrl: data.imageUrl,
