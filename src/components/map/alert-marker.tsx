@@ -22,19 +22,21 @@ export function AlertMarker({ alert, onPress }: Props) {
       </View>
 
       <Callout tooltip>
-        <View style={styles.callout}>
-          <View style={styles.calloutHeader}>
-            <View style={[styles.dot, { backgroundColor: color }]} />
-            <Text style={styles.calloutTitle} numberOfLines={1}>
-              {alert.locationName}
-            </Text>
-          </View>
-          <Text style={styles.calloutLevel}>{alert.level.toUpperCase()}</Text>
-          <Text style={styles.calloutDesc} numberOfLines={2}>
-            {alert.description}
-          </Text>
-        </View>
-      </Callout>
+  <View style={styles.callout}>
+    <View style={styles.calloutHeader}>
+      <View style={[styles.dot, { backgroundColor: color }]} />
+      <Text style={styles.calloutTitle} numberOfLines={1}>
+        {alert.locationName}
+      </Text>
+    </View>
+    <Text style={styles.calloutLevel}>
+      {alert.level.toUpperCase()} • {alert.confirmCount} {alert.confirmCount === 1 ? 'confirm' : 'confirms'}
+    </Text>
+    <Text style={styles.calloutDesc} numberOfLines={3}>
+      {alert.description || 'No additional details'}
+    </Text>
+  </View>
+</Callout>
     </Marker>
   );
 }

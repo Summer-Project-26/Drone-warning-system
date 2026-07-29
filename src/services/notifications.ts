@@ -1,7 +1,48 @@
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Alert as DroneAlert } from '@/types/alert';
+
+const NOTIFICATION_LOG_KEY = 'skyalert:notification-log';
+const MAX_LOG_ENTRIES = 50;
+
+export interface NotificationLogEntry {
+  id: string;
+  title: string;
+  body: string;
+  timestamp: number;
+  alertLevel?: 'low' | 'medium' | 'high';
+  alertId?: string;
+}
+
+export async function logNotification(entry: NotificationLogEntry): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIFICATION_LOG_KEY);
+    const existing: NotificationLogEntry[] = raw ? JSON.parse(raw) : [];
+    const next = [entry, ...existing].slice(0, MAX_LOG_ENTRIES);
+    await AsyncStorage.setItem(NOTIFICATION_LOG_KEY, JSON.stringify(next));
+  } catch (e) {
+    console.error('[notifications] log failed:', e);
+  }
+}
+
+export async function loadNotificationLog(): Promise<NotificationLogEntry[]> {
+  try {
+    const raw = await AsyncStorage.getItem(NOTIFICATION_LOG_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function clearNotificationLog(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(NOTIFICATION_LOG_KEY);
+  } catch (e) {
+    console.error('[notifications] clear failed:', e);
+  }
+}
+
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -46,14 +87,25 @@ export async function fireGeofenceAlert(alert: DroneAlert): Promise<void> {
         ? 'Drone reported nearby'
         : 'Drone activity nearby';
 
+  const body = `${alert.locationName} — ${alert.description.slice(0, 100)}`;
+
   await Notifications.scheduleNotificationAsync({
     content: {
       title,
-      body: `${alert.locationName} — ${alert.description.slice(0, 100)}`,
+      body,
       data: { alertId: alert.id },
       sound: 'default',
     },
     trigger: null,
+  });
+
+  await logNotification({
+    id: `${Date.now()}-${alert.id}`,
+    title,
+    body,
+    timestamp: Date.now(),
+    alertLevel: alert.level,
+    alertId: alert.id,
   });
 }
 

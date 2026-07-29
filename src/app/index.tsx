@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -79,12 +79,29 @@ export default function HomeScreen() {
     Open map
   </ThemedText>
 </Pressable>
+
+<Pressable
+  onPress={() => router.push('/settings')}
+  style={({ pressed }) => [
+    styles.settingsBtn,
+    pressed && { opacity: 0.7 },
+  ]}>
+  <ThemedText type="smallBold" style={styles.settingsBtnText}>
+    ⚙ Settings
+  </ThemedText>
+</Pressable>
           <Pressable
   onPress={() => router.push('/add-alert')}
   style={({ pressed }) => [styles.reportButton, pressed && { opacity: 0.7 }]}>
   <ThemedText type="smallBold" style={{ color: '#fff' }}>
     Report a drone
   </ThemedText>
+</Pressable>
+
+<Pressable
+  onPress={() => router.push('/notifications')}
+  style={({ pressed }) => [styles.settingsBtn, pressed && { opacity: 0.7 }]}>
+  <Text style={styles.settingsBtnText}>🔔 Notifications</Text>
 </Pressable>
           
         </View>
@@ -166,6 +183,20 @@ mapButton: {
   alignItems: 'center',
   marginTop: Spacing.two,
 },
+settingsBtn: {
+    backgroundColor: '#1F2023',
+    padding: Spacing.three,
+    borderRadius: Spacing.four,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#2E3135',
+    marginTop: Spacing.two,
+  },
+  settingsBtnText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
+  },
   reportButton: {
   backgroundColor: '#EF4444',
   padding: Spacing.three,
