@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, Pressable, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, Pressable, ScrollView, Switch, Alert as RNAlert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/services/firebase';
 
 import { loadSettings, saveSettings, DEFAULT_SETTINGS, type AppSettings } from '@/services/settings';
 import { stopGeofencing } from '@/services/background-location';
-import { signOut } from 'firebase/auth';
-import { auth } from '@/services/firebase';
-import { Alert as RNAlert } from 'react-native';
 
 const RADIUS_OPTIONS = [1, 3, 5, 10] as const;
 
@@ -29,10 +28,26 @@ export default function SettingsScreen() {
     setSettings(next);
     await saveSettings(next);
 
-    // if background location is turned off, stop the geofencing task
     if (key === 'backgroundLocationEnabled' && value === false) {
       await stopGeofencing().catch(() => undefined);
     }
+  }
+
+  async function handleLogout() {
+    RNAlert.alert('Log out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut(auth);
+          } catch (e) {
+            console.error('[settings] logout failed:', e);
+          }
+        },
+      },
+    ]);
   }
 
   if (!loaded) {
@@ -43,36 +58,17 @@ export default function SettingsScreen() {
     );
   }
 
-  async function handleLogout() {
-  RNAlert.alert('Log out', 'Are you sure you want to log out?', [
-    { text: 'Cancel', style: 'cancel' },
-    {
-      text: 'Log out',
-      style: 'destructive',
-      onPress: async () => {
-        try {
-          await signOut(auth);
-        } catch (e) {
-          console.error('[settings] logout failed:', e);
-        }
-      },
-    },
-  ]);
-}
-
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} style={styles.backBtn}>
-            <Ionicons name="chevron-back" size={24} color="#fff" />
-          </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.title}>Settings</Text>
             <Text style={styles.subtitle}>Alerts &amp; preferences</Text>
           </View>
         </View>
 
+        {/* ALERT RADIUS */}
         <Text style={styles.sectionLabel}>ALERT RADIUS</Text>
         <View style={styles.card}>
           <Text style={styles.rowTitle}>Detection radius</Text>
@@ -94,6 +90,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* NOTIFICATIONS */}
         <Text style={styles.sectionLabel}>NOTIFICATIONS</Text>
         <View style={styles.card}>
           <ToggleRow
@@ -118,6 +115,7 @@ export default function SettingsScreen() {
           />
         </View>
 
+        {/* PRIVACY & LOCATION */}
         <Text style={styles.sectionLabel}>PRIVACY &amp; LOCATION</Text>
         <View style={styles.card}>
           <ToggleRow
@@ -135,18 +133,53 @@ export default function SettingsScreen() {
           />
         </View>
 
+        {/* Privacy note */}
         <View style={styles.privacyNote}>
-          <Pressable
-  onPress={handleLogout}
-  style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}>
-  <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-  <Text style={styles.logoutText}>Log out</Text>
-</Pressable>
           <Ionicons name="lock-closed-outline" size={16} color="#B0B4BA" />
           <Text style={styles.privacyText}>
             Your location data is never stored on our servers. Reports are anonymized before submission.
           </Text>
         </View>
+
+        {/* ACCOUNT */}
+        <Text style={styles.sectionLabel}>ACCOUNT</Text>
+        <View style={styles.card}>
+          <Pressable
+            onPress={() => router.push('/profile')}
+            style={({ pressed }) => [styles.accountRow, pressed && { opacity: 0.7 }]}>
+            <View style={styles.accountIcon}>
+              <Ionicons name="person-outline" size={18} color="#3B82F6" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>Profile</Text>
+              <Text style={styles.rowSub}>Manage your account details</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#60646C" />
+          </Pressable>
+
+          <View style={styles.divider} />
+
+          <Pressable
+            onPress={() => router.push('/report-bug')}
+            style={({ pressed }) => [styles.accountRow, pressed && { opacity: 0.7 }]}>
+            <View style={styles.accountIcon}>
+              <Ionicons name="bug-outline" size={18} color="#3B82F6" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rowTitle}>Report a Bug</Text>
+              <Text style={styles.rowSub}>Help us fix issues quickly</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#60646C" />
+          </Pressable>
+        </View>
+
+        {/* Log out */}
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}>
+          <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+          <Text style={styles.logoutText}>Log out</Text>
+        </Pressable>
       </ScrollView>
     </SafeAreaView>
   );
@@ -185,7 +218,6 @@ const styles = StyleSheet.create({
   content: {
     paddingHorizontal: 16,
     paddingBottom: 24,
-    gap: 8,
   },
   headerRow: {
     flexDirection: 'row',
@@ -194,12 +226,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginTop: 8,
   },
-  backBtn: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: { color: '#fff', fontSize: 26, fontWeight: '700' },
   subtitle: { color: '#B0B4BA', fontSize: 13, marginTop: 2 },
   sectionLabel: {
@@ -207,8 +233,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 1,
-    marginTop: 16,
-    marginBottom: 4,
+    marginTop: 20,
+    marginBottom: 8,
   },
   card: {
     backgroundColor: '#1F2023',
@@ -244,6 +270,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
+  accountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  accountIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: '#1B2A4A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   divider: { height: 1, backgroundColor: '#2E3135' },
   privacyNote: {
     flexDirection: 'row',
@@ -254,7 +294,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2E3135',
-    marginTop: 8,
+    marginTop: 20,
   },
   privacyText: {
     color: '#B0B4BA',
@@ -263,20 +303,20 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   logoutBtn: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 8,
-  backgroundColor: '#1F2023',
-  paddingVertical: 14,
-  borderRadius: 12,
-  borderWidth: 1,
-  borderColor: '#EF4444',
-  marginTop: 16,
-},
-logoutText: {
-  color: '#EF4444',
-  fontSize: 15,
-  fontWeight: '600',
-},
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1F2023',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    marginTop: 24,
+  },
+  logoutText: {
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '600',
+  },
 });
