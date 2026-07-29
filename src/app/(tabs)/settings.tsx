@@ -6,6 +6,9 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { loadSettings, saveSettings, DEFAULT_SETTINGS, type AppSettings } from '@/services/settings';
 import { stopGeofencing } from '@/services/background-location';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/services/firebase';
+import { Alert as RNAlert } from 'react-native';
 
 const RADIUS_OPTIONS = [1, 3, 5, 10] as const;
 
@@ -39,6 +42,23 @@ export default function SettingsScreen() {
       </SafeAreaView>
     );
   }
+
+  async function handleLogout() {
+  RNAlert.alert('Log out', 'Are you sure you want to log out?', [
+    { text: 'Cancel', style: 'cancel' },
+    {
+      text: 'Log out',
+      style: 'destructive',
+      onPress: async () => {
+        try {
+          await signOut(auth);
+        } catch (e) {
+          console.error('[settings] logout failed:', e);
+        }
+      },
+    },
+  ]);
+}
 
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
@@ -116,6 +136,12 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.privacyNote}>
+          <Pressable
+  onPress={handleLogout}
+  style={({ pressed }) => [styles.logoutBtn, pressed && { opacity: 0.7 }]}>
+  <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+  <Text style={styles.logoutText}>Log out</Text>
+</Pressable>
           <Ionicons name="lock-closed-outline" size={16} color="#B0B4BA" />
           <Text style={styles.privacyText}>
             Your location data is never stored on our servers. Reports are anonymized before submission.
@@ -236,4 +262,21 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     flex: 1,
   },
+  logoutBtn: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 8,
+  backgroundColor: '#1F2023',
+  paddingVertical: 14,
+  borderRadius: 12,
+  borderWidth: 1,
+  borderColor: '#EF4444',
+  marginTop: 16,
+},
+logoutText: {
+  color: '#EF4444',
+  fontSize: 15,
+  fontWeight: '600',
+},
 });

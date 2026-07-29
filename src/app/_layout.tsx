@@ -60,7 +60,7 @@ export default function TabLayout() {
       ) : user && role === 'admin' ? (
         <AdminDashboard />
       ) : user ? (
-        <Stack screenOptions={{ headerShown: false }} initialRouteName="index" />
+        <Stack screenOptions={{ headerShown: false }} initialRouteName="(tabs)" />
       ) : isAuthRoute ? (
         <Stack screenOptions={{ headerShown: false }} />
       ) : (
